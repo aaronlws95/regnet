@@ -1,0 +1,5 @@
+data/
+*.avi
+.vs/
+__pycache__/
+*.pyc
