@@ -2,6 +2,7 @@ import numpy as np
 from pathlib import Path
 import cv2
 from tqdm import tqdm
+import matplotlib.pyplot as plt
 
 import src.utils as utils
 import src.visualize as vis
@@ -16,6 +17,7 @@ dataset_params = {
     'v_fov': (-24.9, 2.0),
     'd_rot': 1,
     'd_trans': 0.1,
+    'fixed_decalib': True,
 }
 dataset = Kitti_Dataset(dataset_params)
 
@@ -27,6 +29,55 @@ pcl_uv, pcl_z = dataset.get_projected_pts(i, dataset.velo_extrinsic, img.shape, 
 img_projected = vis.get_projected_img(pcl_uv, pcl_z, img)
 # img_projected = cv2.resize(img_projected, (224, 244))
 # vis.show_img(img_projected)
+
+# Depth map without FOV
+# pcl = dataset.load_lidar(i)
+# pcl_xyz = np.hstack((pcl[:, :3], np.ones((pcl.shape[0], 1)))).T
+# pcl_xyz = dataset.velo_extrinsic @ pcl_xyz
+# pcl_xyz = dataset.cam_intrinsic @ pcl_xyz
+# pcl_xyz = pcl_xyz.T
+# pcl_z = pcl_xyz[:, 2]
+# pcl_xyz = pcl_xyz / pcl_xyz[:, 2, None]
+# pcl_uv = pcl_xyz[:, :2]
+# pcl_u = pcl_xyz[:, 0]
+# pcl_v = pcl_xyz[:, 1]
+
+# height = img.shape[0]
+# width = img.shape[1]
+# dimg = np.zeros((height, width, 1))
+# mask = (pcl_u > 0) & (pcl_u < width) & (pcl_v > 0) & (pcl_v < height) & (pcl_z > 0)
+# ymask, xmask = pcl_v[mask].astype(int), pcl_u[mask].astype(int)
+# dimg[ymask, xmask, 0] = pcl_z[mask]
+
+# lidarimg = np.zeros((height, width, 1))
+# lidarimg[ymask, xmask, 0] = pcl[mask, 3]
+
+# # vis.show_img(dimg.squeeze())
+# pcl_uv2, pcl_z2 = dataset.get_projected_pts(i, dataset.velo_extrinsic, img.shape, dataset.h_fov, dataset.v_fov)
+
+# gt_depth_img = dataset.get_depth_image(i, dataset.velo_extrinsic, img.shape, dataset.h_fov, dataset.v_fov)
+# gt_depth_img = utils.mean_normalize_pts(gt_depth_img).astype('float32').squeeze()
+# # gt_depth_img = cv2.resize(gt_depth_img, (dataset.img_size, dataset.img_size))
+# # vis.show_img(gt_depth_img)
+
+# print(pcl_z2.shape, pcl_z[mask].shape)
+
+# fig, ax = plt.subplots(3, 1)
+# ax[0].imshow(lidarimg.squeeze())
+# ax[1].imshow(dimg.squeeze())
+# ax[2].imshow(gt_depth_img)
+# plt.show()
+
+# # dimg[1, ymask, xmask] = lidar[mask,3]
+
+# img_projected = vis.get_projected_img(pcl_uv[mask], pcl_z[mask], img)
+# img_projected2 = vis.get_projected_img(pcl_uv2, pcl_z2, img)
+
+# fig, ax = plt.subplots(2, 1)
+# ax[0].imshow(img_projected)
+# ax[1].imshow(img_projected2)
+# plt.show()
+
 
 # Rotation Matrix <-> Euler
 # rotmat = utils.get_rotmat_from_extrinsic(dataset.velo_extrinsic)
@@ -117,34 +168,34 @@ img_projected = vis.get_projected_img(pcl_uv, pcl_z, img)
 # vis.show_img(depth_img)
 
 # Checking stuff
-new_rotmat = utils.euler_to_rotmat(utils.degree_to_rad(95.31148369), utils.degree_to_rad(-88.83698953), utils.degree_to_rad(-6.16228829))
-new_extrinsic = utils.get_extrinsic(new_rotmat, utils.get_trans_from_extrinsic(dataset.velo_extrinsic).reshape(3, 1))
+# new_rotmat = utils.euler_to_rotmat(utils.degree_to_rad(95.31148369), utils.degree_to_rad(-88.83698953), utils.degree_to_rad(-6.16228829))
+# new_extrinsic = utils.get_extrinsic(new_rotmat, utils.get_trans_from_extrinsic(dataset.velo_extrinsic).reshape(3, 1))
 
-inv_extrinsic = utils.inv_extrinsic(new_extrinsic)
-diff_extrinsic = utils.mult_extrinsic(dataset.velo_extrinsic, inv_extrinsic)
-diff_rotmat = utils.get_rotmat_from_extrinsic(diff_extrinsic)
-diff_trans = utils.get_trans_from_extrinsic(diff_extrinsic)
+# inv_extrinsic = utils.inv_extrinsic(new_extrinsic)
+# diff_extrinsic = utils.mult_extrinsic(dataset.velo_extrinsic, inv_extrinsic)
+# diff_rotmat = utils.get_rotmat_from_extrinsic(diff_extrinsic)
+# diff_trans = utils.get_trans_from_extrinsic(diff_extrinsic)
 
-print(diff_trans)
+# print(diff_trans)
 
-diff_euler = utils.rotmat_to_euler(diff_rotmat, out='deg')
+# diff_euler = utils.rotmat_to_euler(diff_rotmat, out='deg')
 
-print(diff_euler)
+# print(diff_euler)
 
-[roll, pitch, yaw] = utils.rotmat_to_euler(new_rotmat)
-# print(utils.rad_to_degree(roll), utils.rad_to_degree(pitch), utils.rad_to_degree(yaw))
+# [roll, pitch, yaw] = utils.rotmat_to_euler(new_rotmat)
+# # print(utils.rad_to_degree(roll), utils.rad_to_degree(pitch), utils.rad_to_degree(yaw))
 
-pcl_uv, pcl_z = dataset.get_projected_pts(i, new_extrinsic, img.shape, dataset.h_fov, dataset.v_fov)
-pred_projected_img = vis.get_projected_img(pcl_uv, pcl_z, img)
+# pcl_uv, pcl_z = dataset.get_projected_pts(i, new_extrinsic, img.shape, dataset.h_fov, dataset.v_fov)
+# pred_projected_img = vis.get_projected_img(pcl_uv, pcl_z, img)
 
-pcl_uv, pcl_z = dataset.get_projected_pts(i, dataset.velo_extrinsic, img.shape, dataset.h_fov, dataset.v_fov)
-gt_projected_img = vis.get_projected_img(pcl_uv, pcl_z, img)
+# pcl_uv, pcl_z = dataset.get_projected_pts(i, dataset.velo_extrinsic, img.shape, dataset.h_fov, dataset.v_fov)
+# gt_projected_img = vis.get_projected_img(pcl_uv, pcl_z, img)
 
-import matplotlib.pyplot as plt
-fig, ax = plt.subplots(2, 1)
-ax[0].imshow(pred_projected_img)
-ax[1].imshow(gt_projected_img)
-plt.show()
+# import matplotlib.pyplot as plt
+# fig, ax = plt.subplots(2, 1)
+# ax[0].imshow(pred_projected_img)
+# ax[1].imshow(gt_projected_img)
+# plt.show()
 
 # Pred Decalib Quaternion Real Part:
 # Pred Decalib Quaternion Dual Part:

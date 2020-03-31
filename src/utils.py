@@ -51,9 +51,19 @@ def get_projection_outlier_idx(pts, img_shape):
     outliers = np.logical_or(u_outliers, v_outliers)
     return outliers
 
-def get_2D_lidar_projection(pcl, cam_intrinsic, velo_extrinsic, h_fov, v_fov):
+def get_2D_lidar_projection_fov(pcl, cam_intrinsic, velo_extrinsic, h_fov, v_fov):
     filter_pcl = filter_pts_by_fov(pcl, h_fov, v_fov)
     pcl_xyz = np.hstack((filter_pcl[:, :3], np.ones((filter_pcl.shape[0],1)))).T
+    pcl_xyz = velo_extrinsic @ pcl_xyz
+    pcl_xyz = cam_intrinsic @ pcl_xyz
+    pcl_xyz = pcl_xyz.T
+    pcl_z = pcl_xyz[:, 2]
+    pcl_xyz = pcl_xyz / pcl_xyz[:, 2, None]
+    pcl_uv = pcl_xyz[:, :2]
+    return pcl_uv, pcl_z
+
+def get_2D_lidar_projection(pcl, cam_intrinsic, velo_extrinsic):
+    pcl_xyz = np.hstack((pcl[:, :3], np.ones((pcl.shape[0],1)))).T
     pcl_xyz = velo_extrinsic @ pcl_xyz
     pcl_xyz = cam_intrinsic @ pcl_xyz
     pcl_xyz = pcl_xyz.T

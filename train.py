@@ -5,7 +5,7 @@ from torch.utils.tensorboard import SummaryWriter
 import os
 from pathlib import Path
 
-from src.model import RegNet, get_num_parameters
+import src.model as mod
 from src.dataset import Kitti_Dataset
 
 # Setup
@@ -13,28 +13,30 @@ os.environ['TORCH_HOME'] = os.path.join('D:\\', 'machine_learning')
 start_epoch = 0
 
 # Config
-RUN_ID = 0
+RUN_ID = 2
 SAVE_PATH = str(Path('data')/'checkpoints'/'run_{:05d}'.format(RUN_ID))
 LOG_PATH = str(Path('data')/'tensorboard'/'run_{:05d}'.format(RUN_ID))
 Path(SAVE_PATH).mkdir(parents=True, exist_ok=True)
 Path(LOG_PATH).mkdir(parents=True, exist_ok=True)
 
 # Hyperparameters
-LEARNING_RATE = 0.001
+LEARNING_RATE = 3e-4
 EPOCHS = 5000
 BATCH_SIZE = 4
 SAVE_RATE = 1000
 LOG_RATE = 10
+EPSILON = 100
 
 # Dataset
 dataset_params = {
     'base_path': Path('data')/'KITTI_SMALL',
     'date': '2011_09_26',
     'drives': [5],
-    'h_fov': (-90, 90),
-    'v_fov': (-24.9, 2.0),
     'd_rot': 1,
     'd_trans': 0.1,
+    'fixed_decalib': False,
+    'resize_w': 621,
+    'resize_h': 188,
 }
 
 dataset = Kitti_Dataset(dataset_params)
@@ -43,7 +45,7 @@ train_loader = DataLoader(dataset,
                           shuffle=True)
 
 # Model
-model = RegNet()
+model = mod.RegNet_v1()
 criterion = nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
 model.cuda()
@@ -84,7 +86,7 @@ for epoch in range(start_epoch, EPOCHS):
         # Calculate loss
         real_loss = criterion(out[:, :4], decalib_quat_real)
         dual_loss = criterion(out[:, 4:], decalib_quat_dual)
-        loss = real_loss + dual_loss
+        loss = EPSILON*real_loss + dual_loss
 
         # Backward pass
         loss.backward()
@@ -109,6 +111,7 @@ for epoch in range(start_epoch, EPOCHS):
                 'training_params': training_params,
             }
             torch.save(model_save, SAVE_PATH + '/model_{:05d}.pth'.format(n_iter))
+
 # Save final model
 model_save = {
     'epoch': epoch,

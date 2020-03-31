@@ -15,11 +15,11 @@ class Kitti_Dataset(Dataset):
         date = params['date']
         drives = params['drives']
 
-        self.h_fov = params['h_fov']
-        self.v_fov = params['v_fov']
         self.d_rot = params['d_rot']
         self.d_trans = params['d_trans']
-        self.img_size = 224
+        self.resize_h = params['resize_h']
+        self.resize_w = params['resize_w']
+        self.fixed_decalib = params['fixed_decalib']
 
         self.img_path = []
         self.lidar_path = []
@@ -40,16 +40,14 @@ class Kitti_Dataset(Dataset):
     def load_lidar(self, index):
         return np.fromfile(self.lidar_path[index], dtype=np.float32).reshape(-1, 4)
 
-    def get_projected_pts(self, index, extrinsic, img_shape, h_fov, v_fov):
+    def get_projected_pts(self, index, extrinsic, img_shape):
         pcl = self.load_lidar(index)
-        pcl_uv, pcl_z = utils.get_2D_lidar_projection(pcl, self.cam_intrinsic, extrinsic, h_fov, v_fov)
-        outliers = utils.get_projection_outlier_idx(pcl_uv, img_shape)
-        pcl_uv = pcl_uv[~outliers]
-        pcl_z = pcl_z[~outliers]
-        return pcl_uv, pcl_z
+        pcl_uv, pcl_z = utils.get_2D_lidar_projection(pcl, self.cam_intrinsic, extrinsic)
+        mask = (pcl_uv[:, 0] > 0) & (pcl_uv[:, 0] < img_shape[1]) & (pcl_uv[:, 1] > 0) & (pcl_uv[:, 1] < img_shape[0]) & (pcl_z > 0)
+        return pcl_uv[mask], pcl_z[mask]
 
-    def get_depth_image(self, index, extrinsic, img_shape, h_fov, v_fov):
-        pcl_uv, pcl_z = self.get_projected_pts(index, extrinsic, img_shape, h_fov, v_fov)
+    def get_depth_image(self, index, extrinsic, img_shape):
+        pcl_uv, pcl_z = self.get_projected_pts(index, extrinsic, img_shape)
         pcl_uv = pcl_uv.astype(np.uint32)
         pcl_z = pcl_z.reshape(-1, 1)
         depth_img = np.zeros((img_shape[0], img_shape[1], 1))
@@ -62,13 +60,20 @@ class Kitti_Dataset(Dataset):
     def get_decalibration(self):
         def get_rand():
             return np.random.rand() * 2 - 1
-
-        d_roll = get_rand()*utils.degree_to_rad(self.d_rot)
-        d_pitch = get_rand()*utils.degree_to_rad(self.d_rot)
-        d_yaw = get_rand()*utils.degree_to_rad(self.d_rot)
-        d_x = get_rand()*self.d_trans
-        d_y = get_rand()*self.d_trans
-        d_z = get_rand()*self.d_trans
+        if self.fixed_decalib:
+            d_roll = utils.degree_to_rad(self.d_rot)
+            d_pitch = utils.degree_to_rad(self.d_rot)
+            d_yaw = utils.degree_to_rad(self.d_rot)
+            d_x = self.d_trans
+            d_y = self.d_trans
+            d_z = self.d_trans
+        else:
+            d_roll = get_rand()*utils.degree_to_rad(self.d_rot)
+            d_pitch = get_rand()*utils.degree_to_rad(self.d_rot)
+            d_yaw = get_rand()*utils.degree_to_rad(self.d_rot)
+            d_x = get_rand()*self.d_trans
+            d_y = get_rand()*self.d_trans
+            d_z = get_rand()*self.d_trans
         decalib_val = dict(
             d_rot_angle = [d_roll, d_pitch, d_yaw],
             d_trans = [d_x, d_y, d_z],
@@ -85,18 +90,17 @@ class Kitti_Dataset(Dataset):
         imagenet_mean = [0.485, 0.456, 0.406]
         imagenet_std = [0.229, 0.224, 0.225]
 
-
         decalib_extrinsic, _ = self.get_decalibration()
         decalib_quat_real, decalib_quat_dual = utils.extrinsic_to_dual_quat(decalib_extrinsic)
         decalib_quat_real, decalib_quat_dual = utils.normalize_dual_quat(decalib_quat_real, decalib_quat_dual)
 
         init_extrinsic = utils.mult_extrinsic(self.velo_extrinsic, decalib_extrinsic)
 
-        depth_img = self.get_depth_image(index, init_extrinsic, rgb_img.shape, self.h_fov, self.v_fov)
+        depth_img = self.get_depth_image(index, init_extrinsic, rgb_img.shape)
         depth_img = utils.mean_normalize_pts(depth_img).astype('float32')
 
-        rgb_img = cv2.resize(rgb_img, (self.img_size, self.img_size))
-        depth_img = cv2.resize(depth_img, (self.img_size, self.img_size))
+        rgb_img = cv2.resize(rgb_img, (self.resize_w, self.resize_h))
+        depth_img = cv2.resize(depth_img, (self.resize_w, self.resize_h))
         depth_img = depth_img[:, :, np.newaxis]
 
         decalib_quat_real = torch.from_numpy(decalib_quat_real).type(torch.FloatTensor)
