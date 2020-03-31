@@ -10,8 +10,8 @@ from src.model import RegNet, get_num_parameters
 from src.dataset import Kitti_Dataset
 
 # Setup
-RUN_ID = 5
-MODEL_ID = 3000
+RUN_ID = 9
+MODEL_ID = 1000
 SAVE_PATH = str(Path('data')/'checkpoints'/'run_{:05d}'.format(RUN_ID)/'model_{:05d}.pth'.format(MODEL_ID))
 
 # Dataset
@@ -21,8 +21,8 @@ dataset_params = {
     'drives': [5],
     'h_fov': (-90, 90),
     'v_fov': (-24.9, 2.0),
-    'd_rot': 1,
-    'd_trans': 0.1,
+    'd_rot': 5,
+    'd_trans': 0.5,
 }
 
 dataset = Kitti_Dataset(dataset_params)
