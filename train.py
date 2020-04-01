@@ -7,13 +7,14 @@ from pathlib import Path
 
 import src.model as mod
 from src.dataset import Kitti_Dataset
+import src.dataset_params as dp
 
 # Setup
 os.environ['TORCH_HOME'] = os.path.join('D:\\', 'machine_learning')
 start_epoch = 0
 
 # Config
-RUN_ID = 2
+RUN_ID = 5
 SAVE_PATH = str(Path('data')/'checkpoints'/'run_{:05d}'.format(RUN_ID))
 LOG_PATH = str(Path('data')/'tensorboard'/'run_{:05d}'.format(RUN_ID))
 Path(SAVE_PATH).mkdir(parents=True, exist_ok=True)
@@ -21,19 +22,19 @@ Path(LOG_PATH).mkdir(parents=True, exist_ok=True)
 
 # Hyperparameters
 LEARNING_RATE = 3e-4
-EPOCHS = 5000
+EPOCHS = 200
 BATCH_SIZE = 4
-SAVE_RATE = 1000
+SAVE_RATE = 100
 LOG_RATE = 10
-EPSILON = 100
+QUAT_FACTOR = 1
 
 # Dataset
 dataset_params = {
-    'base_path': Path('data')/'KITTI_SMALL',
-    'date': '2011_09_26',
-    'drives': [5],
-    'd_rot': 1,
-    'd_trans': 0.1,
+    'base_path': dp.TRAIN_SET['base_path'],
+    'date': dp.TRAIN_SET['date'],
+    'drives': dp.TRAIN_SET['drives'],
+    'd_rot': 5,
+    'd_trans': 0.5,
     'fixed_decalib': False,
     'resize_w': 621,
     'resize_h': 188,
@@ -86,7 +87,7 @@ for epoch in range(start_epoch, EPOCHS):
         # Calculate loss
         real_loss = criterion(out[:, :4], decalib_quat_real)
         dual_loss = criterion(out[:, 4:], decalib_quat_dual)
-        loss = EPSILON*real_loss + dual_loss
+        loss = QUAT_FACTOR*real_loss + dual_loss
 
         # Backward pass
         loss.backward()

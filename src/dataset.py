@@ -26,9 +26,10 @@ class Kitti_Dataset(Dataset):
         for drive in drives:
             cur_img_path = Path(base_path)/date/(date + '_drive_{:04d}_sync'.format(drive))/'image_02'/'data'
             cur_lidar_path = Path(base_path)/date/(date + '_drive_{:04d}_sync'.format(drive))/'velodyne_points'/'data'
-            for i in range(len(list(cur_img_path.glob('*')))):
-                self.img_path.append(str(cur_img_path/'{:010d}.png'.format(i)))
-                self.lidar_path.append(str(cur_lidar_path/'{:010d}.bin'.format(i)))
+            for file_name in sorted(cur_img_path.glob('*.png')):
+                self.img_path.append(str(file_name))
+            for file_name in sorted(cur_lidar_path.glob('*.bin')):
+                self.lidar_path.append(str(file_name))
 
         CAM02_PARAMS, VELO_PARAMS = calib.get_calib(date)
         self.cam_intrinsic = utils.get_intrinsic(CAM02_PARAMS['fx'], CAM02_PARAMS['fy'], CAM02_PARAMS['cx'], CAM02_PARAMS['cy'])
@@ -92,7 +93,6 @@ class Kitti_Dataset(Dataset):
 
         decalib_extrinsic, _ = self.get_decalibration()
         decalib_quat_real, decalib_quat_dual = utils.extrinsic_to_dual_quat(decalib_extrinsic)
-        decalib_quat_real, decalib_quat_dual = utils.normalize_dual_quat(decalib_quat_real, decalib_quat_dual)
 
         init_extrinsic = utils.mult_extrinsic(self.velo_extrinsic, decalib_extrinsic)
 

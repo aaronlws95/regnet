@@ -3,6 +3,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 from pathlib import Path
 import matplotlib.pyplot as plt
+import numpy as np
 
 import src.utils as utils
 import src.model as mod
@@ -10,7 +11,7 @@ from src.dataset import Kitti_Dataset
 import src.visualize as vis
 
 # Setup
-RUN_ID = 2
+RUN_ID = 4
 MODEL_ID = 4999
 SAVE_PATH = str(Path('data')/'checkpoints'/'run_{:05d}'.format(RUN_ID)/'model_{:05d}.pth'.format(MODEL_ID))
 
@@ -19,8 +20,8 @@ dataset_params = {
     'base_path': Path('data')/'KITTI_SMALL',
     'date': '2011_09_26',
     'drives': [5],
-    'd_rot': 1,
-    'd_trans': 0.1,
+    'd_rot': 2,
+    'd_trans': 0.2,
     'fixed_decalib': True,
     'resize_w': 621,
     'resize_h': 188,
@@ -61,6 +62,10 @@ with torch.no_grad():
         inv_decalib_extrinsic = utils.inv_extrinsic(pred_decalib_extrinsic)
         pred_extrinsic = utils.mult_extrinsic(init_extrinsic, inv_decalib_extrinsic)
 
+        pred_decalib_rotmat = utils.get_rotmat_from_extrinsic(pred_decalib_extrinsic)
+        pred_decalib_trans = utils.get_trans_from_extrinsic(pred_decalib_extrinsic)
+        pred_decalib_euler = utils.rotmat_to_euler(pred_decalib_rotmat, out='deg')
+
         # Get ground truth
         gt_decalib_extrinsic = utils.dual_quat_to_extrinsic(gt_decalib_quat_real, gt_decalib_quat_dual)
         inv_decalib_extrinsic = utils.inv_extrinsic(gt_decalib_extrinsic)
@@ -72,6 +77,9 @@ with torch.no_grad():
 
         print('GT Decalib Angles:', gt_decalib_euler)
         print('GT Decalib Translations:', gt_decalib_trans)
+
+        print('Pred Decalib Angles:', pred_decalib_euler)
+        print('Pred Decalib Translations:', pred_decalib_trans)
 
         # print('Pred Decalib Quaternion Real Part:', pred_decalib_quat_real)
         # print('Pred Decalib Quaternion Dual Part:', pred_decalib_quat_dual)

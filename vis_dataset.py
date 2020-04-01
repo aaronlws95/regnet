@@ -5,6 +5,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import cv2
 
+import src.dataset_params as dp
 import src.utils as utils
 from src.dataset import Kitti_Dataset
 import src.visualize as vis
@@ -12,12 +13,12 @@ import src.visualize as vis
 # Load Dataset
 # Original Img Size: [375, 1242]
 dataset_params = {
-    'base_path': Path('data')/'KITTI_SMALL',
-    'date': '2011_09_26',
-    'drives': [5],
-    'd_rot': 1,
-    'd_trans': 0.1,
-    'fixed_decalib': True,
+    'base_path': dp.TRAIN_SET['base_path'],
+    'date': dp.TRAIN_SET['date'],
+    'drives': dp.TRAIN_SET['drives'],
+    'd_rot': 5,
+    'd_trans': 0.5,
+    'fixed_decalib': False,
     'resize_w': 621,
     'resize_h': 188,
 }
@@ -28,7 +29,7 @@ data_loader = DataLoader(dataset,
                          shuffle=True)
 
 data_loader_iter = iter(data_loader)
-for _ in range(min(5, len(data_loader))):
+for _ in range(min(1, len(data_loader))):
     # Data Index
     data = next(data_loader_iter)
     index = data['index'][0].numpy()

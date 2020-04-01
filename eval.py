@@ -10,7 +10,7 @@ import src.model as mod
 from src.dataset import Kitti_Dataset
 
 # Setup
-RUN_ID = 2
+RUN_ID = 4
 MODEL_ID = 4999
 SAVE_PATH = str(Path('data')/'checkpoints'/'run_{:05d}'.format(RUN_ID)/'model_{:05d}.pth'.format(MODEL_ID))
 
@@ -19,8 +19,8 @@ dataset_params = {
     'base_path': Path('data')/'KITTI_SMALL',
     'date': '2011_09_26',
     'drives': [5],
-    'd_rot': 1,
-    'd_trans': 0.1,
+    'd_rot': 5,
+    'd_trans': 0.5,
     'fixed_decalib': True,
     'resize_w': 621,
     'resize_h': 188,
