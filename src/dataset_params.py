@@ -1,12 +1,12 @@
 from pathlib import Path
 
-SMALL_SET = {
+SMALL_SET_2011_09_26 = {
     'base_path': Path('data')/'KITTI_SMALL',
     'date': '2011_09_26',
     'drives': [5],
 }
 
-TRAIN_SET = {
+TRAIN_SET_2011_09_26 = {
     'base_path': Path('data')/'KITTI',
     'date': '2011_09_26',
     'drives': [1, 2, 9, 11, 13, 14, 15,
@@ -19,13 +19,13 @@ TRAIN_SET = {
                117, 119],
 }
 
-VAL_SET = {
+TEST_SET_2011_09_26 = {
     'base_path': Path('data')/'KITTI',
     'date': '2011_09_26',
     'drives': [5, 70],
 }
 
-TEST_SET = {
+TEST_SET_2011_09_30 = {
     'base_path': Path('data')/'KITTI',
     'date': '2011_09_30',
     'drives': [28],

@@ -13,9 +13,9 @@ import src.visualize as vis
 # Load Dataset
 # Original Img Size: [375, 1242]
 dataset_params = {
-    'base_path': dp.TRAIN_SET['base_path'],
-    'date': dp.TRAIN_SET['date'],
-    'drives': dp.TRAIN_SET['drives'],
+    'base_path': dp.TRAIN_SET_2011_09_26['base_path'],
+    'date': dp.TRAIN_SET_2011_09_26['date'],
+    'drives': dp.TRAIN_SET_2011_09_26['drives'],
     'd_rot': 5,
     'd_trans': 0.5,
     'fixed_decalib': False,

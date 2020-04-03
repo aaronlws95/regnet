@@ -9,20 +9,21 @@ import src.utils as utils
 import src.model as mod
 from src.dataset import Kitti_Dataset
 import src.visualize as vis
+import src.dataset_params as dp
 
 # Setup
-RUN_ID = 4
-MODEL_ID = 4999
+RUN_ID = 5
+MODEL_ID = 15700
 SAVE_PATH = str(Path('data')/'checkpoints'/'run_{:05d}'.format(RUN_ID)/'model_{:05d}.pth'.format(MODEL_ID))
 
 # Dataset
 dataset_params = {
-    'base_path': Path('data')/'KITTI_SMALL',
-    'date': '2011_09_26',
-    'drives': [5],
-    'd_rot': 2,
-    'd_trans': 0.2,
-    'fixed_decalib': True,
+    'base_path': dp.TRAIN_SET_2011_09_26['base_path'],
+    'date': dp.TRAIN_SET_2011_09_26['date'],
+    'drives': dp.TRAIN_SET_2011_09_26['drives'],
+    'd_rot': 5,
+    'd_trans': 0.5,
+    'fixed_decalib': False,
     'resize_w': 621,
     'resize_h': 188,
 }
@@ -30,7 +31,9 @@ dataset_params = {
 dataset = Kitti_Dataset(dataset_params)
 test_loader = DataLoader(dataset,
                          batch_size=1,
-                         shuffle=False)
+                         shuffle=True)
+
+print('Dataset size:', len(dataset))
 
 # Model
 model = mod.RegNet_v1()
@@ -38,7 +41,9 @@ model_load = torch.load(SAVE_PATH)
 model.load_state_dict(model_load['model_state_dict'])
 model.cuda()
 
-model.train()
+print('Trained until Epoch:', model_load['epoch'])
+
+model.eval()
 data_loader_iter = iter(test_loader)
 with torch.no_grad():
     for _ in range(min(5, len(test_loader))):
@@ -98,6 +103,8 @@ with torch.no_grad():
         print('X Error', x_error)
         print('Y Error', y_error)
         print('Z Error', z_error)
+        print('Mean Rotational Error', (roll_error + pitch_error + yaw_error) / 3)
+        print('Mean Translational Error', (x_error + y_error + z_error) / 3)
 
         index = data['index'][0]
         img = dataset.load_image(index)
@@ -112,6 +119,8 @@ with torch.no_grad():
         print('Init X Error', x_error)
         print('Init Y Error', y_error)
         print('Init Z Error', z_error)
+        print('Mean Rotational Error', (roll_error + pitch_error + yaw_error) / 3)
+        print('Mean Translational Error', (x_error + y_error + z_error) / 3)
 
         # Visualize
 

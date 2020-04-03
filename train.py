@@ -30,9 +30,9 @@ QUAT_FACTOR = 1
 
 # Dataset
 dataset_params = {
-    'base_path': dp.TRAIN_SET['base_path'],
-    'date': dp.TRAIN_SET['date'],
-    'drives': dp.TRAIN_SET['drives'],
+    'base_path': dp.TRAIN_SET_2011_09_26['base_path'],
+    'date': dp.TRAIN_SET_2011_09_26['date'],
+    'drives': dp.TRAIN_SET_2011_09_26['drives'],
     'd_rot': 5,
     'd_trans': 0.5,
     'fixed_decalib': False,
@@ -52,8 +52,10 @@ optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
 model.cuda()
 
 # Load
-# MODEL_ID = 1000
-# model_load = torch.load(str(Path(SAVE_PATH)/'model_{:05d}.pth'.format(MODEL_ID)))
+# LOAD_RUN_ID = 5
+# LOAD_MODEL_ID = 15700
+# LOAD_PATH = str(Path('data')/'checkpoints'/'run_{:05d}'.format(LOAD_RUN_ID)/'model_{:05d}.pth'.format(LOAD_RUN_ID))
+# model_load = torch.load(LOAD_PATH)
 # model.load_state_dict(model_load['model_state_dict'])
 # start_epoch = model_load['epoch']
 # model.cuda()
